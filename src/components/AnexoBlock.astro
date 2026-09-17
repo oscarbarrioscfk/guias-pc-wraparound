@@ -1,0 +1,236 @@
+---
+import type { Anexo } from "../types";
+import { paginaSrc } from "../types";
+
+interface Props {
+  anexo: Anexo;
+  guiaSlug: string;
+}
+
+const { anexo, guiaSlug } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const pageSrc = paginaSrc(base, guiaSlug, anexo.pdfPage);
+---
+
+<section class="anexo" id={anexo.id}>
+  <div class="anexo-head">
+    <h3>{anexo.titulo}</h3>
+    <button
+      type="button"
+      class="page-tag"
+      data-open-page
+      data-page-src={pageSrc}
+      data-page-alt={anexo.titulo}
+      data-page-caption={`${anexo.titulo} — hoja para fotocopiar`}
+    >
+      📄 ver hoja para fotocopiar
+    </button>
+  </div>
+
+  {anexo.kind === "tabla" && (
+    <div class="anexo-tabla-scroll">
+      <table class="anexo-tabla" data-persist-scope={anexo.id}>
+        <thead>
+          <tr>
+            <th>Iteración</th>
+            {anexo.columnas.map((c) => <th>{c}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: anexo.filas }, (_, i) => i + 1).map((fila) => (
+            <tr>
+              <td class="anexo-row-index">{fila}</td>
+              {anexo.columnas.map((_, colIdx) => (
+                <td>
+                  <input type="text" inputmode="numeric" data-persist={`${anexo.id}-r${fila}-c${colIdx}`} aria-label={`${anexo.columnas[colIdx]}, iteración ${fila}`} />
+                </td>
+              ))}
+            </tr>
+          ))}
+          {anexo.conPromedio && (
+            <tr class="anexo-promedio-row">
+              <td class="anexo-row-index">Promedio</td>
+              {anexo.columnas.map((_, colIdx) => (
+                <td>
+                  <input type="text" inputmode="decimal" data-persist={`${anexo.id}-promedio-c${colIdx}`} aria-label={`Promedio, ${anexo.columnas[colIdx]}`} />
+                </td>
+              ))}
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  )}
+
+  {anexo.kind === "reto" && (
+    <div class="anexo-reto">
+      <p>{anexo.intro}</p>
+      <ol class="anexo-preguntas">
+        {anexo.preguntas.map((p, i) => (
+          <li>
+            <p>{p}</p>
+            <textarea rows="2" placeholder="Espacio para la respuesta…" data-persist={`${anexo.id}-p${i}`}></textarea>
+          </li>
+        ))}
+      </ol>
+      {anexo.explicacion.map((p) => <p>{p}</p>)}
+      <table class="anexo-tabla-dado">
+        <thead>
+          <tr>
+            <th>Valor del dado</th>
+            <th>Cantidad de agua en mm por día</th>
+          </tr>
+        </thead>
+        <tbody>
+          {anexo.tablaDado.map((row) => (
+            <tr>
+              <td>{row.valor}</td>
+              <td>{row.mm}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p>{anexo.notaFinal}</p>
+    </div>
+  )}
+</section>
+
+<script>
+  // Persistencia liviana en el navegador de quien lee: nada se envia a
+  // ningun lado, es solo para que no se pierda lo escrito al recargar.
+  const KEY_PREFIX = "gpc-anexo:";
+
+  document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-persist]").forEach((el) => {
+    const key = KEY_PREFIX + el.dataset.persist;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved !== null) el.value = saved;
+    } catch (e) {}
+    el.addEventListener("input", () => {
+      try {
+        localStorage.setItem(key, el.value);
+      } catch (e) {}
+    });
+  });
+</script>
+
+<style>
+  .anexo {
+    margin-top: 32px;
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--paper-raised);
+  }
+  .anexo-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .anexo-head h3 {
+    margin: 0;
+    font-size: 18px;
+  }
+  .page-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 12px;
+    background: var(--paper);
+    cursor: pointer;
+    color: var(--ink-soft);
+    flex: none;
+  }
+  .page-tag:hover {
+    border-color: var(--guide-purple);
+    color: var(--guide-purple);
+  }
+
+  .anexo-tabla-scroll {
+    overflow-x: auto;
+  }
+  .anexo-tabla,
+  .anexo-tabla-dado {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13.5px;
+  }
+  .anexo-tabla th,
+  .anexo-tabla td,
+  .anexo-tabla-dado th,
+  .anexo-tabla-dado td {
+    border: 1px solid var(--line);
+    padding: 6px 8px;
+    text-align: center;
+  }
+  .anexo-tabla th {
+    background: var(--guide-purple-soft);
+    color: var(--guide-purple);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .anexo-row-index {
+    font-family: "JetBrains Mono", monospace;
+    color: var(--ink-soft);
+    background: var(--paper);
+  }
+  .anexo-promedio-row .anexo-row-index {
+    font-weight: 700;
+    color: var(--guide-purple);
+  }
+  .anexo-tabla input {
+    width: 100%;
+    min-width: 64px;
+    border: none;
+    background: transparent;
+    text-align: center;
+    font: inherit;
+    color: var(--ink);
+    padding: 4px;
+  }
+  .anexo-tabla input:focus {
+    outline: 2px solid var(--guide-purple);
+    border-radius: 4px;
+  }
+
+  .anexo-tabla-dado {
+    max-width: 360px;
+    margin: 14px 0;
+  }
+  .anexo-tabla-dado th {
+    background: var(--guide-pink-soft);
+    color: var(--ink);
+  }
+
+  .anexo-preguntas {
+    padding-left: 22px;
+  }
+  .anexo-preguntas li {
+    margin-bottom: 16px;
+  }
+  .anexo-preguntas p {
+    margin: 0 0 6px;
+  }
+  .anexo-preguntas textarea {
+    width: 100%;
+    max-width: 520px;
+    font: inherit;
+    font-size: 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: var(--paper);
+    color: var(--ink);
+    resize: vertical;
+  }
+  .anexo-preguntas textarea:focus {
+    outline: 2px solid var(--guide-purple);
+  }
+</style>

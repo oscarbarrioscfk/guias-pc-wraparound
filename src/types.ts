@@ -16,6 +16,30 @@ export type ContentBlock =
   | ({ id: string; moment: Moment; kind: "glossary"; terms: { term: string; definition: string }[] } & WithPdfPage)
   | ({ id: string; moment: Moment; kind: "checklist"; items: string[] } & WithPdfPage);
 
+// Anexos: las hojas de trabajo fotocopiables que se referencian desde las
+// sesiones ("Utilicen el Anexo 1.1...") pero que en la guia impresa viven
+// aparte, en una seccion de Anexos al final. Aca viven junto a la sesion
+// que los usa, para que su contenido tambien quede en el producto.
+export type Anexo =
+  | ({
+      id: string;
+      kind: "tabla";
+      titulo: string;
+      columnas: string[];
+      filas: number;
+      conPromedio: boolean;
+    } & WithPdfPage)
+  | ({
+      id: string;
+      kind: "reto";
+      titulo: string;
+      intro: string;
+      preguntas: string[];
+      explicacion: string[];
+      tablaDado: { valor: number; mm: string }[];
+      notaFinal: string;
+    } & WithPdfPage);
+
 export type AnnotationKind = "comentario" | "diferenciacion" | "diagrama" | "recurso";
 
 export interface Annotation {
@@ -42,6 +66,7 @@ export interface Session {
   manosModalidad: string;
   blocks: ContentBlock[];
   annotations: Annotation[];
+  anexos: Anexo[];
 }
 
 export type Strand =

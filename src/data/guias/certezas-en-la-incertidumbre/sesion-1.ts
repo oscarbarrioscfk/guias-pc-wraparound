@@ -215,4 +215,56 @@ export const sesion1: Session = {
       body: "Quienes marquen “Aún no” en dos o más preguntas pueden repasar la Guía 1 de grado 5° (editor MakeCode), tal como sugiere el recuadro “Si se requiere” de esta guía. La simulación embebida en MakeCode queda para la fase 2 de interactividad (ver docs/decisiones.md).",
     },
   ],
+  // Los anexos viven en la guia impresa en una seccion aparte al final
+  // (folios 47-50, tras las 5 sesiones), no dentro de la Sesión 1. Igual se
+  // migran junto con ella porque la sesión los referencia todo el tiempo
+  // ("Utilicen el Anexo 1.1...", "el reto... en el Anexo 1.2") y sin su
+  // contenido real la sesión queda incompleta.
+  anexos: [
+    {
+      id: "anexo-1-1-primera",
+      kind: "tabla",
+      titulo: "Anexo 1.1 — Ejecución del algoritmo en palabras (primera realización)",
+      pdfPage: 49,
+      columnas: ["Persona 1 · Valor_dado", "Persona 1 · Suma", "Persona 2 · Valor_dado", "Persona 2 · Suma"],
+      filas: 10,
+      conPromedio: true,
+    },
+    {
+      id: "anexo-1-1-segunda",
+      kind: "tabla",
+      titulo: "Anexo 1.1 — Ejecución del algoritmo en palabras (segunda realización)",
+      pdfPage: 50,
+      columnas: ["Persona 1 · Valor_dado", "Persona 1 · Suma", "Persona 2 · Valor_dado", "Persona 2 · Suma"],
+      filas: 10,
+      conPromedio: true,
+    },
+    {
+      id: "anexo-1-2-reto",
+      kind: "reto",
+      titulo: "Anexo 1.2 — Reto",
+      pdfPage: 51,
+      intro:
+        "Todos los fenómenos de la naturaleza o incluso los asociados a las personas tienen eventos que no se pueden predecir exactamente. Tomemos varios ejemplos:",
+      preguntas: [
+        "Si nos piden lanzar un balón de futbol lo más lejos posible, ¿caerá siempre a la misma distancia para una misma persona? Y ¿qué pasa si son diferentes personas las que hacen los lanzamientos?",
+        "Cuando lanzamos un dado en un juego de mesa, ¿sabemos exactamente qué valor saldrá?",
+        "Si dos personas lanzan un dado muchas veces y van sumando lo que va mostrando el dado, ¿la suma será muy diferente?, ¿parecida?, ¿igual?",
+        "Si queremos anticipar la cantidad de agua que caerá en un año dado, se hacen modelos bastante complicados que modelan la incertidumbre, dado que no es posible saber con semanas y meses de anticipación cuándo y cuánto lloverá, pero se tienen datos que permiten estimar lo que podría pasar.",
+      ],
+      explicacion: [
+        "Estos son unos pocos ejemplos en los que no se sabe exactamente qué va a pasar, pero se puede anticipar un resultado aproximado, es decir, sus resultados típicos, si se conocen suficientes datos del pasado y sus características.",
+        "El reto que se plantea en esta guía es el de diseñar un programa que pueda estimar la cantidad total de agua que caerá en una ciudad durante un año, sabiendo que el agua que puede caer por día se puede aproximar siguiendo una tabla como la siguiente, asociada al lanzamiento de un dado:",
+      ],
+      tablaDado: [
+        { valor: 1, mm: "0 mm" },
+        { valor: 2, mm: "5 mm" },
+        { valor: 3, mm: "10 mm" },
+        { valor: 4, mm: "20 mm" },
+        { valor: 5, mm: "40 mm" },
+        { valor: 6, mm: "80 mm" },
+      ],
+      notaFinal: "También se requiere conocer el promedio diario de lluvia.",
+    },
+  ],
 };

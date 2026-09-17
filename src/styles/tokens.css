@@ -21,8 +21,14 @@
   --guide-pink-soft: #fdeaee;
 }
 
+/*
+ * Tema en tres estados, elegido por quien lee (ver ThemeToggle.astro):
+ * - sin data-theme: sigue el sistema (prefers-color-scheme)
+ * - data-theme="light": fuerza claro aunque el sistema pida oscuro
+ * - data-theme="dark": fuerza oscuro aunque el sistema pida claro
+ */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --ink: #e9ece2;
     --ink-soft: #aab5a9;
     --paper: #121a15;
@@ -40,6 +46,25 @@
     --guide-pink: #ff8fa0;
     --guide-pink-soft: #3a1f26;
   }
+}
+
+:root[data-theme="dark"] {
+  --ink: #e9ece2;
+  --ink-soft: #aab5a9;
+  --paper: #121a15;
+  --paper-raised: #1b251e;
+  --line: #3a453d;
+  --teacher: #5fc4cb;
+  --teacher-soft: #1c3335;
+  --pen: #e88a52;
+  --pen-soft: #3a2417;
+  --highlight: #e0b23e;
+  --highlight-soft: #3a2f10;
+
+  --guide-purple: #c09bdb;
+  --guide-purple-soft: #2a2033;
+  --guide-pink: #ff8fa0;
+  --guide-pink-soft: #3a1f26;
 }
 
 * {

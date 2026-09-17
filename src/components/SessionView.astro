@@ -5,6 +5,7 @@ import FlowDiagram from "./FlowDiagram.astro";
 import GuideHeaderBar from "./GuideHeaderBar.astro";
 import MomentBanner from "./MomentBanner.astro";
 import DurationBar from "./DurationBar.astro";
+import AnexoBlock from "./AnexoBlock.astro";
 
 interface Props {
   session: Session;
@@ -193,6 +194,14 @@ const sessionCoverSrc = paginaSrc(base, session.guiaSlug, session.portadaPdfPage
     </div>
   </div>
 
+  <section class="anexos-section">
+    <h2 class="anexos-heading">Anexos de esta sesión</h2>
+    <p class="anexos-hint">Las hojas de trabajo que se referencian durante la sesión, con su contenido real y un enlace a la hoja para fotocopiar tal como aparece en la guía.</p>
+    {session.anexos.map((anexo) => (
+      <AnexoBlock anexo={anexo} guiaSlug={session.guiaSlug} />
+    ))}
+  </section>
+
   <dialog id="annotation-dialog" class="annotation-dialog">
     <form method="dialog">
       <p class="annotation-dialog-kind"></p>
@@ -330,6 +339,22 @@ const sessionCoverSrc = paginaSrc(base, session.guiaSlug, session.portadaPdfPage
     background: var(--teacher-soft);
     color: var(--ink);
     cursor: pointer;
+  }
+
+  .anexos-section {
+    max-width: 900px;
+    margin: 48px auto 0;
+    padding-top: 24px;
+    border-top: 2px solid var(--line);
+  }
+  .anexos-heading {
+    margin-bottom: 4px;
+  }
+  .anexos-hint {
+    color: var(--ink-soft);
+    font-size: 14px;
+    max-width: 68ch;
+    margin: 0 0 8px;
   }
 
   .session-grid {

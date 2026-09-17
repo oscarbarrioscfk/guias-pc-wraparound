@@ -1,0 +1,65 @@
+---
+// Selector de tema en tres estados: automatico (sigue el sistema), claro,
+// oscuro. Guarda la eleccion en localStorage para que se recuerde entre
+// visitas -- ver el script bloqueante en BaseLayout que la aplica antes
+// de pintar, para evitar el parpadeo del tema equivocado.
+---
+
+<button type="button" id="theme-toggle" class="theme-toggle" aria-label="Cambiar tema de lectura">
+  <span id="theme-toggle-icon">🌗</span>
+  <span id="theme-toggle-label">Automático</span>
+</button>
+
+<script>
+  const KEY = "gpc-theme";
+  const STATES = ["system", "light", "dark"] as const;
+  type ThemeState = (typeof STATES)[number];
+  const META: Record<ThemeState, { icon: string; label: string }> = {
+    system: { icon: "🌗", label: "Automático" },
+    light: { icon: "☀️", label: "Claro" },
+    dark: { icon: "🌙", label: "Oscuro" },
+  };
+
+  const btn = document.getElementById("theme-toggle")!;
+  const icon = document.getElementById("theme-toggle-icon")!;
+  const label = document.getElementById("theme-toggle-label")!;
+
+  function apply(state: ThemeState) {
+    if (state === "system") {
+      delete document.documentElement.dataset.theme;
+    } else {
+      document.documentElement.dataset.theme = state;
+    }
+    icon.textContent = META[state].icon;
+    label.textContent = META[state].label;
+  }
+
+  const saved = (localStorage.getItem(KEY) as ThemeState | null) || "system";
+  apply(saved);
+
+  btn.addEventListener("click", () => {
+    const current = (localStorage.getItem(KEY) as ThemeState | null) || "system";
+    const next = STATES[(STATES.indexOf(current) + 1) % STATES.length];
+    localStorage.setItem(KEY, next);
+    apply(next);
+  });
+</script>
+
+<style>
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--paper-raised);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .theme-toggle:hover {
+    border-color: var(--guide-purple);
+  }
+</style>
