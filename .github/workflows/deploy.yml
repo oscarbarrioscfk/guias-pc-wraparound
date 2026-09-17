@@ -24,7 +24,7 @@ jobs:
           ref: main
           path: main
 
-      - name: Checkout experimento/visor-doble (sirve en /preview/visor-doble/)
+      - name: Checkout experimento/visor-doble (sirve en /preview/)
         uses: actions/checkout@v4
         with:
           ref: experimento/visor-doble
