@@ -31,7 +31,12 @@ const configJson = JSON.stringify({ base, guiaSlug, imgSrc, zonas: clientZones }
       elemento que corresponda. <a href="/guias-pc-wraparound/">← Volver al explorador principal</a>
     </p>
 
-    <div class="stage" id="stage">
+    <div class="toolbar">
+      <button type="button" id="show-all" class="show-all">📋 Ver todas las notas</button>
+      <button type="button" id="reset-all" class="reset-all">⟲ Reiniciar demo</button>
+    </div>
+
+    <div class="stage" id="stage" data-mode="idle">
       <div class="pane-a" id="pane-a">
         <img src={imgSrc} alt="Página 9 de la guía (Sesión 1)" id="visor-img" />
         {zonas.map((z) => (
@@ -51,8 +56,6 @@ const configJson = JSON.stringify({ base, guiaSlug, imgSrc, zonas: clientZones }
         <div class="pane-b-body" id="pane-b-body"></div>
       </div>
     </div>
-
-    <button type="button" id="reset-all" class="reset-all">⟲ Reiniciar demo</button>
   </main>
 </BaseLayout>
 
@@ -73,6 +76,8 @@ const configJson = JSON.stringify({ base, guiaSlug, imgSrc, zonas: clientZones }
     imgSrc: string;
     zonas: Zone[];
   }
+
+  type Mode = "idle" | "single" | "full" | "all";
 
   const dataEl = document.getElementById("zones-data")!;
   const config: Config = JSON.parse(dataEl.textContent || "{}");
@@ -124,8 +129,6 @@ const configJson = JSON.stringify({ base, guiaSlug, imgSrc, zonas: clientZones }
     return best || esVoices[0] || null;
   }
 
-  let barInterval: ReturnType<typeof setInterval> | undefined;
-
   async function speak(text: string) {
     if (!("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
@@ -149,76 +152,157 @@ const configJson = JSON.stringify({ base, guiaSlug, imgSrc, zonas: clientZones }
     return div.innerHTML;
   }
 
-  function renderPane(zone: Zone) {
-    clearInterval(barInterval);
-    window.speechSynthesis?.cancel();
+  // --- fragmentos de Zona 2, parametrizados por id (para poder repetir
+  // varios a la vez en el modo "ver todas") ---
+  function barFragment(zone: Zone, idPrefix: string) {
+    return `
+      <div class="pb-bar-wrap">
+        <div class="pb-bar-track"><div class="pb-bar-fill" id="${idPrefix}-fill"></div></div>
+        <p class="pb-bar-pct" id="${idPrefix}-pct">0%</p>
+      </div>
+      <p class="pb-text">${escapeHtml(zone.contenido)}</p>
+    `;
+  }
+
+  function animateBar(idPrefix: string, track: (iv: ReturnType<typeof setInterval>) => void) {
+    const fill = document.getElementById(`${idPrefix}-fill`);
+    const pctEl = document.getElementById(`${idPrefix}-pct`);
+    if (!fill || !pctEl) return;
+    requestAnimationFrame(() => {
+      fill.style.width = "15%";
+    });
+    let n = 0;
+    const iv = setInterval(() => {
+      n = Math.min(15, n + 1);
+      pctEl.textContent = `${n}%`;
+      if (n >= 15) clearInterval(iv);
+    }, 55);
+    track(iv);
+  }
+
+  function readAloudFragment(zone: Zone, idPrefix: string, autoplayLabel: string) {
+    return `
+      <div class="pb-dice" id="${idPrefix}-dice">🎲</div>
+      <blockquote class="pb-quote">${escapeHtml(zone.textoParaLeer || "")}</blockquote>
+      <button type="button" class="pb-replay" id="${idPrefix}-replay">🔊 ${autoplayLabel}</button>
+      <p class="pb-text">${escapeHtml(zone.contenido)}</p>
+    `;
+  }
+
+  function wireReadAloud(zone: Zone, idPrefix: string) {
+    document.getElementById(`${idPrefix}-replay`)?.addEventListener("click", () => {
+      const dice = document.getElementById(`${idPrefix}-dice`);
+      dice?.classList.remove("spin");
+      requestAnimationFrame(() => dice?.classList.add("spin"));
+      if (zone.textoParaLeer) speak(zone.textoParaLeer);
+    });
+  }
+
+  // se acumulan aca para poder limpiarlas todas al cambiar de modo
+  let activeIntervals: ReturnType<typeof setInterval>[] = [];
+  function clearActiveIntervals() {
+    activeIntervals.forEach((iv) => clearInterval(iv));
+    activeIntervals = [];
+  }
+
+  // --- modo "single": una zona a la vez, Zona 1 se encoge al lado ---
+  function renderSingle(zone: Zone) {
+    const idPrefix = `pb-${zone.id}`;
 
     if (zone.type === "reveal") {
       paneBBody.innerHTML = `<p class="pb-text">${escapeHtml(zone.contenido)}</p>`;
     }
 
     if (zone.type === "animate-bar") {
-      paneBBody.innerHTML = `
-        <div class="pb-bar-wrap">
-          <div class="pb-bar-track"><div class="pb-bar-fill" id="pb-bar-fill"></div></div>
-          <p class="pb-bar-pct" id="pb-bar-pct">0%</p>
-        </div>
-        <p class="pb-text">${escapeHtml(zone.contenido)}</p>
-      `;
-      const fill = document.getElementById("pb-bar-fill")!;
-      const pctEl = document.getElementById("pb-bar-pct")!;
-      requestAnimationFrame(() => {
-        fill.style.width = "15%";
-      });
-      let n = 0;
-      barInterval = setInterval(() => {
-        n = Math.min(15, n + 1);
-        pctEl.textContent = `${n}%`;
-        if (n >= 15) clearInterval(barInterval);
-      }, 55);
+      paneBBody.innerHTML = barFragment(zone, idPrefix);
+      animateBar(idPrefix, (iv) => activeIntervals.push(iv));
     }
 
     if (zone.type === "read-aloud") {
-      paneBBody.innerHTML = `
-        <div class="pb-dice spin" id="pb-dice">🎲</div>
-        <blockquote class="pb-quote">${escapeHtml(zone.textoParaLeer || "")}</blockquote>
-        <button type="button" class="pb-replay" id="pb-replay">🔊 Reproducir de nuevo</button>
-        <p class="pb-text">${escapeHtml(zone.contenido)}</p>
-      `;
+      paneBBody.innerHTML = readAloudFragment(zone, idPrefix, "Reproducir de nuevo");
+      const dice = document.getElementById(`${idPrefix}-dice`);
+      dice?.classList.add("spin");
       if (zone.textoParaLeer) speak(zone.textoParaLeer);
-      document.getElementById("pb-replay")!.addEventListener("click", () => {
-        const dice = document.getElementById("pb-dice")!;
-        dice.classList.remove("spin");
-        requestAnimationFrame(() => dice.classList.add("spin"));
-        if (zone.textoParaLeer) speak(zone.textoParaLeer);
-      });
+      wireReadAloud(zone, idPrefix);
     }
+  }
 
-    if (zone.type === "swap-page") {
-      const src = zone.swapTargetPage ? paginaSrcClient(zone.swapTargetPage) : "";
-      paneBBody.innerHTML = `
-        <img class="pb-page" src="${src}" alt="Página del anexo referenciado" />
-        <p class="pb-text">${escapeHtml(zone.contenido)}</p>
-      `;
-    }
+  // --- modo "full": la zona del Anexo, a todo el ancho, con vuelta explicita ---
+  function renderFull(zone: Zone) {
+    const src = zone.swapTargetPage ? paginaSrcClient(zone.swapTargetPage) : "";
+    paneBBody.innerHTML = `
+      <button type="button" class="pb-back" id="pb-back">← Volver a la guía</button>
+      <img class="pb-page pb-page-full" src="${src}" alt="Página del anexo referenciado" />
+      <p class="pb-text">${escapeHtml(zone.contenido)}</p>
+    `;
+    document.getElementById("pb-back")!.addEventListener("click", closeZone);
+  }
+
+  // --- modo "all": todas las zonas a la vez, Zona 1 chiquita ---
+  function renderAll() {
+    paneBBody.innerHTML = config.zonas
+      .map((zone) => {
+        const idPrefix = `pb-${zone.id}`;
+        let body = "";
+        if (zone.type === "reveal") body = `<p class="pb-text">${escapeHtml(zone.contenido)}</p>`;
+        if (zone.type === "animate-bar") body = barFragment(zone, idPrefix);
+        if (zone.type === "read-aloud") body = readAloudFragment(zone, idPrefix, "Reproducir");
+        if (zone.type === "swap-page") {
+          const src = zone.swapTargetPage ? paginaSrcClient(zone.swapTargetPage) : "";
+          body = `
+            <button type="button" class="pb-page-thumb-btn" data-open-full="${zone.id}">
+              <img class="pb-page-thumb" src="${src}" alt="Página del anexo referenciado" />
+              <span>Ver completo →</span>
+            </button>
+            <p class="pb-text">${escapeHtml(zone.contenido)}</p>
+          `;
+        }
+        return `<div class="pb-card">${body}</div>`;
+      })
+      .join("");
+
+    config.zonas.forEach((zone) => {
+      const idPrefix = `pb-${zone.id}`;
+      if (zone.type === "animate-bar") animateBar(idPrefix, (iv) => activeIntervals.push(iv));
+      if (zone.type === "read-aloud") wireReadAloud(zone, idPrefix);
+    });
+    paneBBody.querySelectorAll<HTMLButtonElement>("[data-open-full]").forEach((btn) => {
+      btn.addEventListener("click", () => openZone(btn.dataset.openFull!));
+    });
+  }
+
+  function setMode(mode: Mode) {
+    clearActiveIntervals();
+    window.speechSynthesis?.cancel();
+    stage.dataset.mode = mode;
   }
 
   function openZone(zoneId: string) {
     const zone = zoneById(zoneId);
     if (!zone) return;
-    stage.classList.add("split");
     document.querySelectorAll(".hotspot").forEach((el) => el.classList.remove("current"));
     document.getElementById(`hotspot-${zoneId}`)?.classList.add("current");
-    renderPane(zone);
+
+    if (zone.type === "swap-page") {
+      setMode("full");
+      renderFull(zone);
+    } else {
+      setMode("single");
+      renderSingle(zone);
+    }
+  }
+
+  function showAll() {
+    document.querySelectorAll(".hotspot").forEach((el) => el.classList.remove("current"));
+    setMode("all");
+    renderAll();
   }
 
   function closeZone() {
-    stage.classList.remove("split");
+    setMode("idle");
     document.querySelectorAll(".hotspot").forEach((el) => el.classList.remove("current"));
-    clearInterval(barInterval);
-    window.speechSynthesis?.cancel();
     setTimeout(() => {
-      if (!stage.classList.contains("split")) paneBBody.innerHTML = "";
+      if (stage.dataset.mode === "idle") paneBBody.innerHTML = "";
     }, 400);
   }
 
@@ -227,6 +311,7 @@ const configJson = JSON.stringify({ base, guiaSlug, imgSrc, zonas: clientZones }
   });
 
   paneBClose.addEventListener("click", closeZone);
+  document.getElementById("show-all")!.addEventListener("click", showAll);
 
   document.getElementById("reset-all")!.addEventListener("click", () => {
     closeZone();
@@ -259,6 +344,29 @@ const configJson = JSON.stringify({ base, guiaSlug, imgSrc, zonas: clientZones }
     color: var(--ink-soft);
   }
 
+  .toolbar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+  }
+  .show-all,
+  .reset-all {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--paper-raised);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .show-all {
+    border-color: var(--guide-purple);
+    background: var(--guide-purple-soft);
+    color: var(--guide-purple);
+  }
+
   .stage {
     display: flex;
     gap: 22px;
@@ -277,20 +385,33 @@ const configJson = JSON.stringify({ base, guiaSlug, imgSrc, zonas: clientZones }
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 12px 28px -18px rgba(0, 0, 0, 0.4);
-    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
     flex: none;
   }
-  .stage.split .pane-a {
+  .stage[data-mode="single"] .pane-a {
     width: 32%;
   }
+  .stage[data-mode="all"] .pane-a {
+    width: 24%;
+  }
+  .stage[data-mode="full"] .pane-a {
+    width: 0%;
+    opacity: 0;
+    border: none;
+  }
   @media (max-width: 800px) {
-    .pane-a,
-    .stage.split .pane-a {
-      width: 100%;
+    .pane-a {
+      width: 100% !important;
     }
-    .stage.split .pane-a {
+    .stage[data-mode="single"] .pane-a,
+    .stage[data-mode="all"] .pane-a {
       max-height: 260px;
       overflow-y: auto;
+    }
+    .stage[data-mode="full"] .pane-a {
+      max-height: 0;
+      opacity: 0;
+      border: none;
     }
   }
   .pane-a img {
@@ -308,19 +429,30 @@ const configJson = JSON.stringify({ base, guiaSlug, imgSrc, zonas: clientZones }
     background: var(--paper-raised);
     position: relative;
     transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
-    flex: none;
+    flex: 1 1 auto;
   }
-  .stage.split .pane-b {
+  .stage[data-mode="single"] .pane-b {
     width: 62%;
     opacity: 1;
     padding: 30px;
   }
+  .stage[data-mode="all"] .pane-b {
+    width: 70%;
+    opacity: 1;
+    padding: 26px;
+  }
+  .stage[data-mode="full"] .pane-b {
+    width: 100%;
+    opacity: 1;
+    padding: 30px;
+  }
   @media (max-width: 800px) {
-    .pane-b,
-    .stage.split .pane-b {
-      width: 100%;
+    .pane-b {
+      width: 100% !important;
     }
-    .stage.split .pane-b {
+    .stage[data-mode="single"] .pane-b,
+    .stage[data-mode="all"] .pane-b,
+    .stage[data-mode="full"] .pane-b {
       padding: 22px 18px;
       margin-top: 4px;
     }
@@ -337,10 +469,19 @@ const configJson = JSON.stringify({ base, guiaSlug, imgSrc, zonas: clientZones }
     background: var(--paper);
     color: var(--ink);
     cursor: pointer;
+    z-index: 2;
   }
   .pane-b-body {
     max-width: 60ch;
   }
+  .stage[data-mode="all"] .pane-b-body {
+    max-width: none;
+  }
+  .stage[data-mode="full"] .pane-b-body {
+    max-width: 720px;
+    margin-inline: auto;
+  }
+
   .pb-text {
     font-size: 16px;
     color: var(--ink);
@@ -420,6 +561,57 @@ const configJson = JSON.stringify({ base, guiaSlug, imgSrc, zonas: clientZones }
     border-radius: 8px;
     margin-bottom: 14px;
   }
+  .pb-page-full {
+    max-width: 100%;
+    width: auto;
+    max-height: 78vh;
+    margin: 14px auto;
+  }
+  .pb-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--guide-purple);
+    background: var(--guide-purple-soft);
+    color: var(--guide-purple);
+    cursor: pointer;
+    margin-bottom: 14px;
+  }
+
+  .pb-card {
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .pb-card:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  .pb-page-thumb-btn {
+    all: unset;
+    cursor: pointer;
+    display: block;
+    margin-bottom: 10px;
+  }
+  .pb-page-thumb {
+    display: block;
+    width: 100%;
+    max-width: 160px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+  }
+  .pb-page-thumb-btn span {
+    display: block;
+    margin-top: 6px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    color: var(--guide-purple);
+  }
 
   .hotspot {
     position: absolute;
@@ -438,8 +630,13 @@ const configJson = JSON.stringify({ base, guiaSlug, imgSrc, zonas: clientZones }
     background: rgba(147, 92, 177, 0.3);
     animation: none;
   }
-  .stage.split .hotspot:not(.current) {
+  .stage[data-mode="single"] .hotspot:not(.current),
+  .stage[data-mode="full"] .hotspot:not(.current) {
     opacity: 0.3;
+  }
+  .stage[data-mode="all"] .hotspot {
+    opacity: 0;
+    pointer-events: none;
   }
   @keyframes hotspot-idle {
     0%,
@@ -462,18 +659,5 @@ const configJson = JSON.stringify({ base, guiaSlug, imgSrc, zonas: clientZones }
       box-shadow: 0 0 0 20px rgba(147, 92, 177, 0);
       background: rgba(147, 92, 177, 0.1);
     }
-  }
-
-  .reset-all {
-    display: block;
-    margin: 28px auto 0;
-    font-family: "JetBrains Mono", monospace;
-    font-size: 13px;
-    padding: 8px 16px;
-    border-radius: 999px;
-    border: 1px solid var(--line);
-    background: var(--paper-raised);
-    color: var(--ink);
-    cursor: pointer;
   }
 </style>
