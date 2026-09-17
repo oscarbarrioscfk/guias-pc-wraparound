@@ -1,0 +1,198 @@
+import type { Session } from "../../../types";
+
+// Contenido migrado de Guía 1 (Certezas en la incertidumbre, grado 6º, Colombia
+// Programa), sesión 1. Las anotaciones de la capa docente se derivan del marco
+// pedagógico de Guía 0 (enseñanza explícita, Usa-Modifica-Crea, diferenciación
+// tipo RTI, equidad de género, evaluación formativa) aplicado a esta sesión en
+// particular — Guía 0 no trae anotaciones sesión por sesión, así que esta es la
+// primera vez que ese marco general se vuelve guía de aula concreta.
+
+export const sesion1: Session = {
+  guiaSlug: "certezas-en-la-incertidumbre",
+  guiaTitulo: "Certezas en la incertidumbre",
+  numero: 1,
+  titulo: "Sesión 1",
+  aprendizajesEsperados: [
+    "Explicar qué es un valor aleatorio.",
+    "Seguir un algoritmo escrito en palabras.",
+    "Organizar datos en una tabla.",
+    "Calcular el promedio de un conjunto de datos.",
+  ],
+  materiales: ["Anexos 1.1 y 1.2 (por grupo)", "Un dado (por grupo)"],
+  duracion: [15, 70, 15],
+  blocks: [
+    {
+      id: "b1",
+      moment: "inicio",
+      kind: "paragraph",
+      text: "A menudo se requiere manejar información en un algoritmo, por ejemplo, para realizar cálculos, buscar u ordenar información. Empieza por leer el reto que estarás en capacidad de resolver al final de esta guía, en la sesión 5 (Anexo 1.2).",
+    },
+    {
+      id: "b2",
+      moment: "inicio",
+      kind: "callout",
+      text: "Imagina que dos personas están lanzando un dado, el cual puede mostrar un número entre 1 y 6 en cada lanzamiento. Queremos determinar si, después de varios lanzamientos, ambas personas obtendrán una suma similar o muy diferente, y cómo se afecta esta respuesta según la cantidad de lanzamientos.",
+    },
+    {
+      id: "b3",
+      moment: "inicio",
+      kind: "paragraph",
+      text: "El cerebro de un computador es su procesador. Gracias a él, un computador puede simular eventos complejos de la naturaleza: por ejemplo, predecir el clima requiere procesar datos de muchos lugares a unas 5.000.000.000.000.000 de operaciones por segundo. Aunque su procesador es mucho menos poderoso, la micro:bit puede realizar 16.000.000 de operaciones por segundo.",
+    },
+    {
+      id: "b4",
+      moment: "inicio",
+      kind: "paragraph",
+      text: "Estas simulaciones manipulan una gran cantidad de datos numéricos, usan datos de característica aleatoria (impredecibles) y no capturan toda la realidad del fenómeno, solo lo que interesa comprender. Todos los fenómenos reales tienen incertidumbre: falta de certeza sobre lo que va a suceder. Cada ejecución de una simulación se llama una realización.",
+    },
+    {
+      id: "b5",
+      moment: "inicio",
+      kind: "paragraph",
+      text: "Un algoritmo es una descripción de un conjunto de acciones para realizar una tarea, y se puede presentar en palabras o en un diagrama de flujo.",
+    },
+    {
+      id: "b6",
+      moment: "inicio",
+      kind: "flowchart",
+      title: "Figura 1. Diagrama de flujo",
+      steps: [
+        "Inicio",
+        "Suma ← 0",
+        "Valor_dado ← Aleatorio de 1 a 6",
+        "Suma ← Suma + Valor_dado",
+        "¿Se completaron 7 lanzamientos?",
+        "Fin",
+      ],
+      iterations: 7,
+    },
+    {
+      id: "b7",
+      moment: "inicio",
+      kind: "algorithm",
+      steps: [
+        "Paso 0: asignar a la variable Suma el valor cero.",
+        "Paso 1: lanzar el dado.",
+        "Paso 2: guardar el valor del dado en la variable Valor_dado.",
+        "Paso 3: acumular en Suma el Valor_dado (Suma = Suma + Valor_dado).",
+        "Paso 4: si aún no se han hecho 7 lanzamientos, ir de nuevo al paso 1.",
+        "Paso 5: reportar el resultado que está en la variable Suma.",
+      ],
+    },
+    {
+      id: "b8",
+      moment: "inicio",
+      kind: "glossary",
+      terms: [
+        { term: "Procesador", definition: "Dispositivo electrónico que entiende un conjunto particular de instrucciones y las ejecuta automáticamente a alta velocidad." },
+        { term: "Datos aleatorios", definition: "Valores que no se pueden predecir exactamente, como el resultado del lanzamiento de un dado." },
+        { term: "Incertidumbre", definition: "Falta de certeza sobre lo que va a suceder en un fenómeno o evento." },
+      ],
+    },
+    {
+      id: "b9",
+      moment: "manos",
+      kind: "paragraph",
+      text: "Trabaja en parejas siguiendo las indicaciones de tu docente. Utilicen el Anexo 1.1, un lápiz y un dado.",
+    },
+    {
+      id: "b10",
+      moment: "manos",
+      kind: "callout",
+      text: "Simulen, mediante el lanzamiento de un dado, el nacimiento de bebés en un hospital a lo largo de un día. Una persona lanzará el dado 10 veces y registrará el número de niños que nacen; la segunda persona hará lo mismo para las niñas. Si suman los valores de cada persona, ¿la suma del total de niños y la del total de niñas será muy diferente?",
+    },
+    {
+      id: "b11",
+      moment: "manos",
+      kind: "paragraph",
+      text: "No completen todavía la parte del promedio. Cada valor no puede anticiparse antes de lanzar el dado: se sabe que 0 o 7 son imposibles, pero no hay seguridad de obtener, por ejemplo, un 6. A estos se les llama valores aleatorios.",
+    },
+    {
+      id: "b12",
+      moment: "manos",
+      kind: "callout",
+      text: "Si realizan de nuevo el mismo ejercicio, ¿los resultados esperados serán diferentes o similares? Completen ahora la segunda tabla del Anexo 1.1 repitiendo la actividad de 10 lanzamientos por persona. ¿Qué notaron? ¿Se parecen los resultados?",
+    },
+    {
+      id: "b13",
+      moment: "manos",
+      kind: "paragraph",
+      text: "Calculen el promedio de cada columna: encuentren la suma de los resultados (¿dónde ya tienen ese valor calculado?) y divídanla entre 10. Si notan que la suma y el promedio parecen acercarse a un valor, tienen razón — lo confirmarán en la sesión 2.",
+    },
+    {
+      id: "b14",
+      moment: "manos",
+      kind: "glossary",
+      terms: [
+        { term: "Promedio", definition: "También conocido como media aritmética: sumar todos los valores de un conjunto de datos y dividir por la cantidad de valores. Ejemplo: si cinco personas tardaron 10, 12, 8, 14 y 16 minutos, el promedio es (10+12+8+14+16)/5 = 12 minutos." },
+      ],
+    },
+    {
+      id: "b15",
+      moment: "cierre",
+      kind: "checklist",
+      items: [
+        "¿Puedes explicar qué es un valor aleatorio?",
+        "¿Puedes seguir un algoritmo escrito en palabras?",
+        "¿Puedes organizar datos en una tabla?",
+        "¿Puedes calcular el promedio de un conjunto de datos?",
+      ],
+    },
+    {
+      id: "b16",
+      moment: "cierre",
+      kind: "paragraph",
+      text: "Si tus respuestas fueron “Parcialmente” o “Aún no”, vuelve a leer los contenidos, resalta los términos que no comprendiste y discute con tu compañera o compañero. Si aún tienes dudas, consúltale a tu docente. Luego resume qué entendiste de Algoritmo, Valor aleatorio y Promedio, y elabora un diagrama.",
+    },
+    {
+      id: "b17",
+      moment: "cierre",
+      kind: "paragraph",
+      text: "Una observación final: aunque cada valor aleatorio no se puede predecir exactamente, ciertas características de estos datos, como su promedio, tienden a dar un valor similar en diferentes realizaciones. En las próximas sesiones explorarás qué pasa con miles de datos — algo imposible de hacer a mano, para lo que se recurre a un computador. Reflexiona: ¿cómo te sirve lo aprendido para el reto del Anexo 1.2?",
+    },
+  ],
+  annotations: [
+    {
+      id: "a1",
+      anchor: "b2",
+      kind: "comentario",
+      title: "Antes de que lancen el dado: que predigan",
+      body: "Lea el planteamiento en voz alta con todo el grupo y pregunte qué creen que va a pasar con la suma de niños y niñas antes de empezar a lanzar. Es instrucción explícita (Guía 0): que sepan qué se espera que aprendan antes de hacerlo, no que lo descubran solos.",
+    },
+    {
+      id: "a2",
+      anchor: "b6",
+      kind: "diagrama",
+      title: "Recorrido paso a paso del algoritmo",
+      body: "En la versión interactiva, cada clic en “Siguiente paso” avanza el diagrama un paso real del algoritmo y lanza un dado de verdad: se resalta la casilla activa y se actualiza el valor de Suma en pantalla, para que las y los estudiantes vean cómo cambia la variable antes de ejecutar el algoritmo a mano.",
+    },
+    {
+      id: "a3",
+      anchor: "b7",
+      kind: "diferenciacion",
+      title: "Si el algoritmo en palabras se les dificulta",
+      body: "Lea el algoritmo en voz alta paso a paso mientras otra persona simula físicamente el lanzamiento del dado y anota el valor en el tablero. Guía 0 sugiere partir la sesión en dos momentos si el ritmo de avance del grupo lo requiere.",
+    },
+    {
+      id: "a4",
+      anchor: "b9",
+      kind: "diferenciacion",
+      title: "Asignación y rotación de roles",
+      body: "Use los roles de Guía 0: navegante (dicta qué anotar) y piloto(a) (lanza el dado y registra), o coordinador(a)/secretario(a). Roten los roles a mitad de la actividad para que ambas personas lancen el dado y registren datos por igual — apoya la recomendación de equidad de género de Guía 0.",
+    },
+    {
+      id: "a5",
+      anchor: "b12",
+      kind: "comentario",
+      title: "Punto de chequeo formativo",
+      body: "Antes de completar la segunda tabla, pida que algunas parejas compartan su predicción usando “palitos al azar” (Guía 0) para repartir la palabra de forma equitativa. No confirme todavía si la suma tiende a estabilizarse: eso se cierra en la sesión 2.",
+    },
+    {
+      id: "a6",
+      anchor: "b15",
+      kind: "recurso",
+      title: "Si necesitan reforzar antes de la sesión 2",
+      body: "Quienes marquen “Aún no” en dos o más preguntas pueden repasar la Guía 1 de grado 5° (editor MakeCode), tal como sugiere el recuadro “Si se requiere” de esta guía. La simulación embebida en MakeCode queda para la fase 2 de interactividad (ver docs/decisiones.md).",
+    },
+  ],
+};

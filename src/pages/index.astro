@@ -1,0 +1,85 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { guia } from "../data/guias/certezas-en-la-incertidumbre/guia";
+
+const guias = [guia];
+---
+
+<BaseLayout title="Guías PC — Explorador Wraparound">
+  <main class="wrap">
+    <p class="eyebrow">Colombia Programa · Guías de Pensamiento Computacional</p>
+    <h1>Explorador docente wraparound</h1>
+    <p class="lede">
+      Piloto del recorrido descrito en <a href="https://github.com/oscarbarrioscfk/guias-pc-wraparound/blob/main/docs/decisiones.md">docs/decisiones.md</a>: contenido
+      del estudiante con la capa docente anclada al lado, tal como en <em>Writing with Power</em>.
+    </p>
+
+    <div class="guides">
+      {guias.map((g) => (
+        <article class="guide-card">
+          <p class="eyebrow">{g.grado}</p>
+          <h2>{g.titulo}</h2>
+          <p>{g.resumen}</p>
+          <ol class="sessions">
+            {Array.from({ length: g.sesionesTotales }, (_, i) => i + 1).map((n) => {
+              const disponible = g.sesionesDisponibles.includes(n);
+              return (
+                <li>
+                  {disponible ? (
+                    <a href={`/guias/${g.slug}/sesion-${n}`}>Sesión {n}</a>
+                  ) : (
+                    <span class="soon">Sesión {n} — próximamente</span>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </article>
+      ))}
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .lede {
+    max-width: 62ch;
+    color: var(--ink-soft);
+  }
+  .guides {
+    display: grid;
+    gap: 20px;
+    margin-top: 32px;
+  }
+  .guide-card {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px 24px;
+    background: var(--paper-raised);
+    max-width: 640px;
+  }
+  .sessions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    list-style: none;
+    padding: 0;
+    margin: 16px 0 0;
+  }
+  .sessions a,
+  .sessions .soon {
+    display: inline-block;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+  }
+  .sessions a {
+    background: var(--teacher-soft);
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .sessions .soon {
+    color: var(--ink-soft);
+  }
+</style>

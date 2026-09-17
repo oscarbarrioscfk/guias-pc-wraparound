@@ -4,7 +4,7 @@ Explorador docente, al estilo *Teacher's Book Wraparound*, para las Guías de Pe
 
 ## Estado del proyecto
 
-Fase de diseño. Todavía no hay código — este repo arranca con las decisiones de producto y de experiencia que se acordaron antes de elegir plataforma, lenguaje o formato.
+Piloto funcionando: Astro + TypeScript, sin backend. La Sesión 1 de Guía 1 ("Certezas en la incertidumbre") ya está migrada end-to-end como prueba del motor wraparound — ver [Desarrollo](#desarrollo) para correrla.
 
 ## Contenido
 
@@ -21,4 +21,15 @@ Fase de diseño. Todavía no hay código — este repo arranca con las decisione
 
 ## Próximos pasos
 
-Comparar plataformas, lenguajes y formatos concretos frente a las decisiones documentadas: PDF enriquecido con hotspots, web app a medida, herramientas de autoría (H5P, Genially), libro de texto digital, o un motor propio de mayor riqueza interactiva.
+Con el piloto de la Sesión 1 validando el motor (ver [`docs/plataforma.md`](docs/plataforma.md) para la comparación que llevó a Astro), lo que sigue es: migrar las sesiones 2 a 5 de esta guía, decidir el hosting real y el embebido de prueba en un LMS, y evaluar si vale la pena sumar `vite-plugin-pwa`/Workbox en lugar del service worker artesanal actual.
+
+## Desarrollo
+
+```bash
+npm install
+npm run dev       # http://localhost:4321
+npm run build     # genera dist/
+npm run preview   # sirve dist/ para probar antes de desplegar
+```
+
+Piloto disponible en `/guias/certezas-en-la-incertidumbre/sesion-1`: implementa el layout wraparound (Decisión 1), el diagrama de flujo interactivo con lanzamientos de dado reales (Decisión 2), y un service worker mínimo para que la sesión visitada quede disponible sin conexión (Decisión 5).

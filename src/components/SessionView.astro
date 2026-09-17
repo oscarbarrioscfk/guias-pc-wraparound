@@ -1,0 +1,458 @@
+---
+import type { ContentBlock, Session } from "../types";
+import { ANNOTATION_ICON, ANNOTATION_LABEL, MOMENT_LABEL } from "../types";
+import FlowDiagram from "./FlowDiagram.astro";
+
+interface Props {
+  session: Session;
+}
+
+const { session } = Astro.props;
+
+type RenderItem = { type: "heading"; moment: ContentBlock["moment"] } | { type: "block"; block: ContentBlock };
+
+const renderItems: RenderItem[] = [];
+let lastMoment: ContentBlock["moment"] | null = null;
+for (const block of session.blocks) {
+  if (block.moment !== lastMoment) {
+    renderItems.push({ type: "heading", moment: block.moment });
+    lastMoment = block.moment;
+  }
+  renderItems.push({ type: "block", block });
+}
+
+const durationByMoment = { inicio: session.duracion[0], manos: session.duracion[1], cierre: session.duracion[2] };
+
+const annotationByAnchor = new Map(session.annotations.map((a) => [a.anchor, a]));
+const leftAnnotations = session.annotations.filter((_, i) => i % 2 === 0);
+const rightAnnotations = session.annotations.filter((_, i) => i % 2 === 1);
+---
+
+<section class="session" id="session-root" data-layer="docente">
+  <header class="session-header">
+    <p class="eyebrow">{session.guiaTitulo} · {session.titulo}</p>
+    <h1>{session.titulo}</h1>
+
+    <div class="header-grid">
+      <div>
+        <h2 class="mini-heading">Aprendizajes esperados</h2>
+        <ul class="plain-list">
+          {session.aprendizajesEsperados.map((a) => <li>{a}</li>)}
+        </ul>
+      </div>
+      <div>
+        <h2 class="mini-heading">Material para la sesión</h2>
+        <ul class="plain-list">
+          {session.materiales.map((m) => <li>{m}</li>)}
+        </ul>
+      </div>
+    </div>
+
+    <div class="duration-bar" role="img" aria-label={`Reparto de tiempo sugerido: ${session.duracion[0]}% inicio, ${session.duracion[1]}% manos a la obra, ${session.duracion[2]}% cierre`}>
+      {(["inicio", "manos", "cierre"] as const).map((m) => (
+        <div class="duration-seg" style={`flex-grow:${durationByMoment[m]}`}>
+          <span>{durationByMoment[m]}%</span>
+          <small>{MOMENT_LABEL[m]}</small>
+        </div>
+      ))}
+    </div>
+
+    <button type="button" id="layer-toggle" class="layer-toggle" aria-pressed="false">
+      👁️ Vista docente — tocar para ver como estudiante
+    </button>
+  </header>
+
+  <div class="session-grid">
+    <div class="margin-col left">
+      {leftAnnotations.map((a) => (
+        <div class="annotation" data-kind={a.kind} data-anchor={a.anchor} id={`annotation-${a.id}`}>
+          <p class="annotation-kind">{ANNOTATION_ICON[a.kind]} {ANNOTATION_LABEL[a.kind]}</p>
+          <h4>{a.title}</h4>
+          <p>{a.body}</p>
+        </div>
+      ))}
+    </div>
+
+    <div class="center-col" id="center-col">
+      {renderItems.map((item) => {
+        if (item.type === "heading") {
+          return (
+            <h2 class="moment-heading" id={`moment-${item.moment}`}>
+              {MOMENT_LABEL[item.moment]}
+            </h2>
+          );
+        }
+
+        const block = item.block;
+        const annotation = annotationByAnchor.get(block.id);
+
+        return (
+          <div class="block-wrap">
+            {block.kind === "paragraph" && (
+              <p class="block" id={block.id}>
+                {block.text}
+              </p>
+            )}
+            {block.kind === "callout" && (
+              <blockquote class="block callout" id={block.id}>
+                {block.text}
+              </blockquote>
+            )}
+            {block.kind === "algorithm" && (
+              <ul class="block algorithm" id={block.id}>
+                {block.steps.map((s) => <li>{s}</li>)}
+              </ul>
+            )}
+            {block.kind === "glossary" && (
+              <dl class="block glossary" id={block.id}>
+                {block.terms.map((t) => (
+                  <>
+                    <dt>{t.term}</dt>
+                    <dd>{t.definition}</dd>
+                  </>
+                ))}
+              </dl>
+            )}
+            {block.kind === "checklist" && (
+              <div class="block checklist" id={block.id}>
+                {block.items.map((it, i) => (
+                  <fieldset>
+                    <legend>{it}</legend>
+                    {["Sí", "Parcialmente", "Aún no"].map((opt) => (
+                      <label>
+                        <input type="radio" name={`chk-${session.numero}-${i}`} value={opt} /> {opt}
+                      </label>
+                    ))}
+                  </fieldset>
+                ))}
+              </div>
+            )}
+            {block.kind === "flowchart" && (
+              <div id={block.id}>
+                <FlowDiagram id={`fd-${block.id}`} title={block.title} steps={block.steps} iterations={block.iterations} />
+              </div>
+            )}
+
+            {annotation && (
+              <button
+                type="button"
+                class="chip"
+                data-title={annotation.title}
+                data-body={annotation.body}
+                data-kind-label={`${ANNOTATION_ICON[annotation.kind]} ${ANNOTATION_LABEL[annotation.kind]}`}
+              >
+                {ANNOTATION_ICON[annotation.kind]} {ANNOTATION_LABEL[annotation.kind]}
+              </button>
+            )}
+          </div>
+        );
+      })}
+    </div>
+
+    <div class="margin-col right">
+      {rightAnnotations.map((a) => (
+        <div class="annotation" data-kind={a.kind} data-anchor={a.anchor} id={`annotation-${a.id}`}>
+          <p class="annotation-kind">{ANNOTATION_ICON[a.kind]} {ANNOTATION_LABEL[a.kind]}</p>
+          <h4>{a.title}</h4>
+          <p>{a.body}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <dialog id="annotation-dialog" class="annotation-dialog">
+    <form method="dialog">
+      <p class="annotation-dialog-kind"></p>
+      <h3 class="annotation-dialog-title"></h3>
+      <p class="annotation-dialog-body"></p>
+      <button type="submit">Cerrar</button>
+    </form>
+  </dialog>
+</section>
+
+<script>
+  const root = document.getElementById("session-root")!;
+  const centerCol = document.getElementById("center-col")!;
+  const toggle = document.getElementById("layer-toggle") as HTMLButtonElement;
+  const dialog = document.getElementById("annotation-dialog") as HTMLDialogElement;
+
+  function alignAnnotations() {
+    const containerRect = centerCol.getBoundingClientRect();
+    document.querySelectorAll<HTMLElement>(".annotation[data-anchor]").forEach((ann) => {
+      const anchorEl = document.getElementById(ann.dataset.anchor || "");
+      if (!anchorEl) return;
+      const anchorRect = anchorEl.getBoundingClientRect();
+      ann.style.top = `${anchorRect.top - containerRect.top}px`;
+    });
+  }
+
+  let resizeTimer: ReturnType<typeof setTimeout>;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(alignAnnotations, 100);
+  });
+  window.addEventListener("load", alignAnnotations);
+  document.fonts?.ready.then(alignAnnotations).catch(() => {});
+  alignAnnotations();
+
+  toggle.addEventListener("click", () => {
+    const isDocente = root.getAttribute("data-layer") === "docente";
+    root.setAttribute("data-layer", isDocente ? "estudiante" : "docente");
+    toggle.setAttribute("aria-pressed", String(isDocente));
+    toggle.textContent = isDocente
+      ? "🎓 Vista estudiante — tocar para ver como docente"
+      : "👁️ Vista docente — tocar para ver como estudiante";
+  });
+
+  document.querySelectorAll<HTMLElement>(".chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      dialog.querySelector(".annotation-dialog-kind")!.textContent = chip.dataset.kindLabel || "";
+      dialog.querySelector(".annotation-dialog-title")!.textContent = chip.dataset.title || "";
+      dialog.querySelector(".annotation-dialog-body")!.textContent = chip.dataset.body || "";
+      dialog.showModal();
+    });
+  });
+</script>
+
+<style>
+  .session-header {
+    margin-bottom: 28px;
+  }
+  .header-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin: 18px 0;
+  }
+  .mini-heading {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 8px;
+  }
+  .plain-list {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 14.5px;
+  }
+  .duration-bar {
+    display: flex;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    margin: 18px 0;
+  }
+  .duration-seg {
+    padding: 8px 10px;
+    font-size: 11px;
+    color: var(--ink);
+    border-right: 1px solid var(--line);
+  }
+  .duration-seg:last-child {
+    border-right: none;
+  }
+  .duration-seg:nth-child(1) {
+    background: var(--highlight-soft);
+  }
+  .duration-seg:nth-child(2) {
+    background: var(--teacher-soft);
+  }
+  .duration-seg:nth-child(3) {
+    background: var(--pen-soft);
+  }
+  .duration-seg span {
+    display: block;
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 600;
+  }
+  .layer-toggle {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--teacher);
+    background: var(--teacher-soft);
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  .session-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  @media (min-width: 900px) {
+    .session-grid {
+      grid-template-columns: 220px minmax(0, 640px) 220px;
+      column-gap: 26px;
+    }
+  }
+  .margin-col {
+    position: relative;
+    display: none;
+  }
+  @media (min-width: 900px) {
+    .margin-col {
+      display: block;
+    }
+    [data-layer="estudiante"] .margin-col {
+      display: none;
+    }
+  }
+  .center-col {
+    position: relative;
+    min-width: 0;
+  }
+
+  .moment-heading {
+    margin-top: 40px;
+    padding-top: 8px;
+    border-top: 2px solid var(--line);
+    font-size: 20px;
+  }
+  .block {
+    font-size: 16px;
+  }
+  .callout {
+    background: var(--highlight-soft);
+    border-left: 3px solid var(--highlight);
+    border-radius: 0 10px 10px 0;
+    margin: 0;
+    padding: 14px 18px;
+    font-style: italic;
+  }
+  .algorithm {
+    padding-left: 20px;
+  }
+  .algorithm li {
+    margin-bottom: 6px;
+  }
+  .glossary dt {
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 600;
+    margin-top: 10px;
+  }
+  .glossary dd {
+    margin-left: 0;
+    color: var(--ink-soft);
+  }
+  .checklist fieldset {
+    border: none;
+    border-top: 1px solid var(--line);
+    padding: 10px 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 16px;
+  }
+  .checklist legend {
+    width: 100%;
+    font-weight: 600;
+    padding: 0;
+    margin-bottom: 4px;
+  }
+  .checklist label {
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .block-wrap {
+    margin-bottom: 18px;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 12px;
+    margin-top: 8px;
+    background: var(--paper-raised);
+    cursor: pointer;
+  }
+  @media (min-width: 900px) {
+    .chip {
+      display: none;
+    }
+    [data-layer="estudiante"] .chip {
+      display: none;
+    }
+  }
+  [data-layer="estudiante"] .chip {
+    display: none;
+  }
+
+  .annotation {
+    position: absolute;
+    left: 0;
+    right: 0;
+    background: var(--paper-raised);
+    border-radius: 0 10px 10px 0;
+    padding: 10px 14px;
+    font-size: 13px;
+    box-shadow: 0 4px 14px -10px rgba(0, 0, 0, 0.3);
+  }
+  .annotation h4 {
+    margin: 2px 0 4px;
+    font-size: 14.5px;
+  }
+  .annotation p {
+    margin: 0;
+  }
+  .annotation-kind {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+  }
+  .annotation[data-kind="comentario"] {
+    border-left: 3px solid var(--pen);
+  }
+  .annotation[data-kind="diferenciacion"] {
+    border-left: 3px solid var(--highlight);
+  }
+  .annotation[data-kind="diagrama"] {
+    border-left: 3px solid var(--teacher);
+  }
+  .annotation[data-kind="recurso"] {
+    border-left: 3px solid var(--ink-soft);
+  }
+
+  .annotation-dialog {
+    border: none;
+    border-radius: 12px;
+    padding: 0;
+    max-width: 420px;
+  }
+  .annotation-dialog form {
+    padding: 20px 22px;
+  }
+  .annotation-dialog-kind {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--teacher);
+    margin: 0 0 6px;
+  }
+  .annotation-dialog-title {
+    margin: 0 0 10px;
+    font-size: 18px;
+  }
+  .annotation-dialog button {
+    margin-top: 14px;
+    font-family: inherit;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    cursor: pointer;
+  }
+</style>

@@ -1,0 +1,208 @@
+---
+// Diagrama interactivo para la anotacion "diagrama" (Decision 2 de
+// docs/decisiones.md). Soporta específicamente la forma de algoritmo más común
+// en esta guía: inicio -> inicializar acumulador -> [generar valor -> acumular
+// -> ¿repetir?] x n -> fin. Si sesiones futuras traen otra forma de diagrama,
+// este componente se generaliza entonces -- no antes.
+interface Props {
+  id: string;
+  title: string;
+  steps: string[]; // [inicio, init, random, accum, check, fin]
+  iterations: number;
+}
+
+const { id, title, steps, iterations } = Astro.props;
+const [inicio, init, random, accum, check, fin] = steps;
+---
+
+<figure class="flow" id={id}>
+  <figcaption class="flow-title">{title}</figcaption>
+  <div class="flow-body">
+    <svg viewBox="0 0 320 460" role="img" aria-label={`Diagrama de flujo: ${steps.join(" → ")}, repetido ${iterations} veces`}>
+      <defs>
+        <marker id={`${id}-arrow`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 Z" style="fill:var(--ink-soft)" />
+        </marker>
+      </defs>
+
+      <rect x="90" y="10" width="140" height="40" rx="8" data-node="inicio" style="fill:var(--paper-raised);stroke:var(--ink-soft)" />
+      <text x="160" y="34" text-anchor="middle" font-size="12" style="fill:var(--ink)">{inicio}</text>
+      <path d="M160,50 L160,72" marker-end={`url(#${id}-arrow)`} style="stroke:var(--ink-soft);fill:none" />
+
+      <rect x="70" y="72" width="180" height="40" rx="8" data-node="init" style="fill:var(--paper-raised);stroke:var(--ink-soft)" />
+      <text x="160" y="96" text-anchor="middle" font-size="11.5" style="fill:var(--ink)">{init}</text>
+      <path d="M160,112 L160,134" marker-end={`url(#${id}-arrow)`} style="stroke:var(--ink-soft);fill:none" />
+
+      <rect x="40" y="134" width="240" height="48" rx="8" data-node="random" style="fill:var(--paper-raised);stroke:var(--ink-soft)" />
+      <text x="160" y="162" text-anchor="middle" font-size="11" style="fill:var(--ink)">{random}</text>
+      <path d="M160,182 L160,204" marker-end={`url(#${id}-arrow)`} style="stroke:var(--ink-soft);fill:none" />
+
+      <rect x="40" y="204" width="240" height="48" rx="8" data-node="accum" style="fill:var(--paper-raised);stroke:var(--ink-soft)" />
+      <text x="160" y="232" text-anchor="middle" font-size="11" style="fill:var(--ink)">{accum}</text>
+      <path d="M160,252 L160,274" marker-end={`url(#${id}-arrow)`} style="stroke:var(--ink-soft);fill:none" />
+
+      <polygon points="160,274 250,326 160,378 70,326" data-node="check" style="fill:var(--paper-raised);stroke:var(--ink-soft)" />
+      <text x="160" y="318" text-anchor="middle" font-size="10.5" style="fill:var(--ink)">{check.split("?")[0]}?</text>
+
+      <path
+        d={`M250,326 C 300,326 300,158 280,158`}
+        data-arrow="loop"
+        marker-end={`url(#${id}-arrow)`}
+        style="stroke:var(--teacher);fill:none;stroke-dasharray:4 4"
+      />
+      <text x="286" y="242" font-size="10" style="fill:var(--teacher)" transform="rotate(90 286 242)">otra vez</text>
+
+      <path d="M160,378 L160,404" data-arrow="exit" marker-end={`url(#${id}-arrow)`} style="stroke:var(--ink-soft);fill:none" />
+
+      <rect x="90" y="404" width="140" height="40" rx="8" data-node="fin" style="fill:var(--paper-raised);stroke:var(--ink-soft)" />
+      <text x="160" y="428" text-anchor="middle" font-size="12" style="fill:var(--ink)">{fin}</text>
+    </svg>
+
+    <div class="flow-controls">
+      <p class="flow-readout" aria-live="polite">Toca “Siguiente paso” para empezar.</p>
+      <div class="flow-buttons">
+        <button type="button" class="fd-next">Siguiente paso ▶</button>
+        <button type="button" class="fd-reset">Reiniciar ⟲</button>
+      </div>
+    </div>
+  </div>
+</figure>
+
+<script define:vars={{ rootId: id, iterations }}>
+  const root = document.getElementById(rootId);
+  const btnNext = root.querySelector(".fd-next");
+  const btnReset = root.querySelector(".fd-reset");
+  const readout = root.querySelector(".flow-readout");
+  const nodeEls = {
+    inicio: root.querySelector('[data-node="inicio"]'),
+    init: root.querySelector('[data-node="init"]'),
+    random: root.querySelector('[data-node="random"]'),
+    accum: root.querySelector('[data-node="accum"]'),
+    check: root.querySelector('[data-node="check"]'),
+    fin: root.querySelector('[data-node="fin"]'),
+  };
+  const loopArrow = root.querySelector('[data-arrow="loop"]');
+  const exitArrow = root.querySelector('[data-arrow="exit"]');
+
+  const sequence = [{ node: "inicio" }, { node: "init", action: (s) => (s.suma = 0) }];
+  for (let i = 0; i < iterations; i++) {
+    sequence.push({
+      node: "random",
+      action: (s) => {
+        s.valorDado = 1 + Math.floor(Math.random() * 6);
+        s.lanzamiento = i + 1;
+      },
+    });
+    sequence.push({ node: "accum", action: (s) => (s.suma += s.valorDado) });
+    sequence.push({ node: "check", action: (s) => (s.loopBack = s.lanzamiento < iterations) });
+  }
+  sequence.push({ node: "fin" });
+
+  let state = { suma: 0, valorDado: null, lanzamiento: 0, loopBack: false };
+  let idx = -1;
+
+  function clearActive() {
+    Object.values(nodeEls).forEach((el) => el && el.classList.remove("active"));
+    loopArrow && loopArrow.classList.remove("active");
+    exitArrow && exitArrow.classList.remove("active");
+  }
+
+  function render() {
+    clearActive();
+    if (idx >= 0) {
+      const step = sequence[idx];
+      nodeEls[step.node] && nodeEls[step.node].classList.add("active");
+      if (step.node === "check") {
+        (state.loopBack ? loopArrow : exitArrow)?.classList.add("active");
+      }
+    }
+    readout.textContent =
+      idx < 0
+        ? "Toca “Siguiente paso” para empezar."
+        : `Lanzamiento ${state.lanzamiento}/${iterations} · Valor_dado: ${state.valorDado ?? "–"} · Suma: ${state.suma}`;
+    btnNext.disabled = idx >= sequence.length - 1;
+  }
+
+  btnNext.addEventListener("click", () => {
+    idx = Math.min(idx + 1, sequence.length - 1);
+    const step = sequence[idx];
+    if (step.action) step.action(state);
+    render();
+  });
+
+  btnReset.addEventListener("click", () => {
+    idx = -1;
+    state = { suma: 0, valorDado: null, lanzamiento: 0, loopBack: false };
+    render();
+  });
+
+  render();
+</script>
+
+<style>
+  .flow {
+    margin: 20px 0;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--paper-raised);
+  }
+  .flow-title {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .flow-body {
+    display: grid;
+    gap: 16px;
+  }
+  @media (min-width: 640px) {
+    .flow-body {
+      grid-template-columns: minmax(0, 320px) 1fr;
+      align-items: center;
+    }
+  }
+  svg {
+    width: 100%;
+    height: auto;
+    color: var(--ink-soft);
+  }
+  svg [data-node].active {
+    stroke: var(--teacher);
+    stroke-width: 2.5;
+    fill: var(--teacher-soft);
+  }
+  svg [data-arrow].active {
+    stroke: var(--teacher);
+    stroke-width: 2.5;
+    stroke-dasharray: none;
+  }
+  .flow-readout {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px;
+    min-height: 1.4em;
+  }
+  .flow-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .flow-buttons button {
+    font-family: inherit;
+    font-size: 13.5px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .flow-buttons button:hover:not(:disabled) {
+    border-color: var(--teacher);
+  }
+  .flow-buttons button:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+</style>
