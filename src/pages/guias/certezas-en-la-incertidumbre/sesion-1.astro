@@ -2,11 +2,13 @@
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import SessionView from "../../../components/SessionView.astro";
 import { sesion1 } from "../../../data/guias/certezas-en-la-incertidumbre/sesion-1";
+
+const base = import.meta.env.BASE_URL;
 ---
 
 <BaseLayout title={`${sesion1.titulo} — ${sesion1.guiaTitulo}`}>
   <main class="wrap">
-    <p><a href="/">← Portada</a></p>
+    <p><a href={base}>← Portada</a></p>
     <SessionView session={sesion1} />
   </main>
 </BaseLayout>

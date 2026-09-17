@@ -5,12 +5,9 @@
 const CACHE = "gpc-wrap-v1";
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches
-      .open(CACHE)
-      .then((cache) => cache.addAll(["/"]))
-      .catch(() => {})
-  );
+  // Sin precache de rutas fijas a proposito: el base path cambia segun el
+  // hosting (ver docs/plataforma.md). El primer fetch real de cada pagina
+  // ya la deja cacheada mas abajo.
   self.skipWaiting();
 });
 

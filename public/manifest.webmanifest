@@ -2,11 +2,11 @@
   "name": "Guías PC — Explorador Wraparound",
   "short_name": "Guías PC",
   "description": "Explorador docente wraparound para las Guías de Pensamiento Computacional de Colombia Programa.",
-  "start_url": "/",
+  "start_url": "/guias-pc-wraparound/",
   "display": "standalone",
   "background_color": "#eef0e6",
   "theme_color": "#1f6f78",
   "icons": [
-    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    { "src": "/guias-pc-wraparound/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
 }

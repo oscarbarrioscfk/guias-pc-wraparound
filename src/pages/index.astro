@@ -3,6 +3,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import { guia } from "../data/guias/certezas-en-la-incertidumbre/guia";
 
 const guias = [guia];
+const base = import.meta.env.BASE_URL;
 ---
 
 <BaseLayout title="Guías PC — Explorador Wraparound">
@@ -26,7 +27,7 @@ const guias = [guia];
               return (
                 <li>
                   {disponible ? (
-                    <a href={`/guias/${g.slug}/sesion-${n}`}>Sesión {n}</a>
+                    <a href={`${base}guias/${g.slug}/sesion-${n}`}>Sesión {n}</a>
                   ) : (
                     <span class="soon">Sesión {n} — próximamente</span>
                   )}
