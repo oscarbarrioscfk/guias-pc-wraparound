@@ -1,5 +1,6 @@
 ---
 import "../styles/tokens.css";
+import PageViewer from "../components/PageViewer.astro";
 
 interface Props {
   title: string;
@@ -29,6 +30,7 @@ const base = import.meta.env.BASE_URL; // ya trae "/" final
   </head>
   <body>
     <slot />
+    <PageViewer />
     <script define:vars={{ swUrl: `${base}sw.js` }}>
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {

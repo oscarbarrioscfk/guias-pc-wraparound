@@ -1,18 +1,22 @@
 ---
-import type { ContentBlock, Session } from "../types";
-import { ANNOTATION_ICON, ANNOTATION_LABEL, MOMENT_LABEL } from "../types";
+import type { ContentBlock, Moment, Session } from "../types";
+import { ANNOTATION_ICON, ANNOTATION_LABEL, MOMENT_LABEL, paginaSrc } from "../types";
 import FlowDiagram from "./FlowDiagram.astro";
+import GuideHeaderBar from "./GuideHeaderBar.astro";
+import MomentBanner from "./MomentBanner.astro";
+import DurationBar from "./DurationBar.astro";
 
 interface Props {
   session: Session;
 }
 
 const { session } = Astro.props;
+const base = import.meta.env.BASE_URL;
 
-type RenderItem = { type: "heading"; moment: ContentBlock["moment"] } | { type: "block"; block: ContentBlock };
+type RenderItem = { type: "heading"; moment: Moment } | { type: "block"; block: ContentBlock };
 
 const renderItems: RenderItem[] = [];
-let lastMoment: ContentBlock["moment"] | null = null;
+let lastMoment: Moment | null = null;
 for (const block of session.blocks) {
   if (block.moment !== lastMoment) {
     renderItems.push({ type: "heading", moment: block.moment });
@@ -21,40 +25,59 @@ for (const block of session.blocks) {
   renderItems.push({ type: "block", block });
 }
 
-const durationByMoment = { inicio: session.duracion[0], manos: session.duracion[1], cierre: session.duracion[2] };
+const momentBannerLines: Record<Moment, { text: string; tone: "purple" | "pink" }[]> = {
+  inicio: [{ text: MOMENT_LABEL.inicio, tone: "pink" }],
+  manos: [
+    { text: MOMENT_LABEL.manos, tone: "purple" },
+    { text: session.manosModalidad, tone: "pink" },
+  ],
+  cierre: [{ text: MOMENT_LABEL.cierre, tone: "pink" }],
+};
 
 const annotationByAnchor = new Map(session.annotations.map((a) => [a.anchor, a]));
 const leftAnnotations = session.annotations.filter((_, i) => i % 2 === 0);
 const rightAnnotations = session.annotations.filter((_, i) => i % 2 === 1);
+
+const sessionCoverSrc = paginaSrc(base, session.guiaSlug, session.portadaPdfPage);
 ---
 
 <section class="session" id="session-root" data-layer="docente">
   <header class="session-header">
-    <p class="eyebrow">{session.guiaTitulo} · {session.titulo}</p>
-    <h1>{session.titulo}</h1>
+    <GuideHeaderBar grado={session.grado} guia={session.guiaTitulo} sesion={session.titulo} rol="Docentes" />
 
-    <div class="header-grid">
-      <div>
-        <h2 class="mini-heading">Aprendizajes esperados</h2>
-        <ul class="plain-list">
-          {session.aprendizajesEsperados.map((a) => <li>{a}</li>)}
-        </ul>
-      </div>
-      <div>
-        <h2 class="mini-heading">Material para la sesión</h2>
-        <ul class="plain-list">
-          {session.materiales.map((m) => <li>{m}</li>)}
-        </ul>
-      </div>
-    </div>
+    <div class="hero">
+      <button
+        type="button"
+        class="hero-cover"
+        data-open-page
+        data-page-src={sessionCoverSrc}
+        data-page-alt={`Portada de ${session.titulo} en la guía original`}
+        data-page-caption={`${session.guiaTitulo} — ${session.titulo}`}
+      >
+        <img src={sessionCoverSrc} alt={`Portada de ${session.titulo} en la guía original`} loading="eager" />
+        <span>📄 ver página original</span>
+      </button>
 
-    <div class="duration-bar" role="img" aria-label={`Reparto de tiempo sugerido: ${session.duracion[0]}% inicio, ${session.duracion[1]}% manos a la obra, ${session.duracion[2]}% cierre`}>
-      {(["inicio", "manos", "cierre"] as const).map((m) => (
-        <div class="duration-seg" style={`flex-grow:${durationByMoment[m]}`}>
-          <span>{durationByMoment[m]}%</span>
-          <small>{MOMENT_LABEL[m]}</small>
+      <div class="hero-info">
+        <h1>{session.titulo}</h1>
+
+        <div class="header-grid">
+          <div class="card">
+            <p class="card-tag">Aprendizajes esperados</p>
+            <ul class="plain-list">
+              {session.aprendizajesEsperados.map((a) => <li>{a}</li>)}
+            </ul>
+          </div>
+          <div class="card">
+            <p class="card-tag">Material para la sesión</p>
+            <ul class="plain-list">
+              {session.materiales.map((m) => <li>{m}</li>)}
+            </ul>
+          </div>
         </div>
-      ))}
+
+        <DurationBar duracion={session.duracion} />
+      </div>
     </div>
 
     <button type="button" id="layer-toggle" class="layer-toggle" aria-pressed="false">
@@ -76,15 +99,12 @@ const rightAnnotations = session.annotations.filter((_, i) => i % 2 === 1);
     <div class="center-col" id="center-col">
       {renderItems.map((item) => {
         if (item.type === "heading") {
-          return (
-            <h2 class="moment-heading" id={`moment-${item.moment}`}>
-              {MOMENT_LABEL[item.moment]}
-            </h2>
-          );
+          return <MomentBanner id={`moment-${item.moment}`} lines={momentBannerLines[item.moment]} />;
         }
 
         const block = item.block;
         const annotation = annotationByAnchor.get(block.id);
+        const pageSrc = paginaSrc(base, session.guiaSlug, block.pdfPage);
 
         return (
           <div class="block-wrap">
@@ -133,17 +153,30 @@ const rightAnnotations = session.annotations.filter((_, i) => i % 2 === 1);
               </div>
             )}
 
-            {annotation && (
+            <div class="block-footer">
               <button
                 type="button"
-                class="chip"
-                data-title={annotation.title}
-                data-body={annotation.body}
-                data-kind-label={`${ANNOTATION_ICON[annotation.kind]} ${ANNOTATION_LABEL[annotation.kind]}`}
+                class="page-tag"
+                data-open-page
+                data-page-src={pageSrc}
+                data-page-alt={`Página original — ${session.titulo}`}
+                data-page-caption={`${session.titulo} — página física ${block.pdfPage}`}
               >
-                {ANNOTATION_ICON[annotation.kind]} {ANNOTATION_LABEL[annotation.kind]}
+                📄 ver página
               </button>
-            )}
+
+              {annotation && (
+                <button
+                  type="button"
+                  class="chip"
+                  data-title={annotation.title}
+                  data-body={annotation.body}
+                  data-kind-label={`${ANNOTATION_ICON[annotation.kind]} ${ANNOTATION_LABEL[annotation.kind]}`}
+                >
+                  {ANNOTATION_ICON[annotation.kind]} {ANNOTATION_LABEL[annotation.kind]}
+                </button>
+              )}
+            </div>
           </div>
         );
       })}
@@ -175,6 +208,7 @@ const rightAnnotations = session.annotations.filter((_, i) => i % 2 === 1);
   const centerCol = document.getElementById("center-col")!;
   const toggle = document.getElementById("layer-toggle") as HTMLButtonElement;
   const dialog = document.getElementById("annotation-dialog") as HTMLDialogElement;
+  const roleTag = root.querySelector(".guide-header-bar .seg-pink");
 
   function alignAnnotations() {
     const containerRect = centerCol.getBoundingClientRect();
@@ -202,6 +236,7 @@ const rightAnnotations = session.annotations.filter((_, i) => i % 2 === 1);
     toggle.textContent = isDocente
       ? "🎓 Vista estudiante — tocar para ver como docente"
       : "👁️ Vista docente — tocar para ver como estudiante";
+    if (roleTag) roleTag.textContent = isDocente ? "Estudiantes" : "Docentes";
   });
 
   document.querySelectorAll<HTMLElement>(".chip").forEach((chip) => {
@@ -216,56 +251,75 @@ const rightAnnotations = session.annotations.filter((_, i) => i % 2 === 1);
 
 <style>
   .session-header {
-    margin-bottom: 28px;
+    margin-bottom: 12px;
+  }
+  .hero {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 24px;
+    margin: 18px 0;
+  }
+  @media (max-width: 640px) {
+    .hero {
+      grid-template-columns: 1fr;
+    }
+  }
+  .hero-cover {
+    all: unset;
+    cursor: pointer;
+    position: relative;
+    display: block;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    box-shadow: 0 10px 24px -16px rgba(0, 0, 0, 0.4);
+  }
+  .hero-cover img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .hero-cover span {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(20, 15, 25, 0.72);
+    color: white;
+    font-size: 10.5px;
+    font-family: "JetBrains Mono", monospace;
+    padding: 5px 8px;
+    text-align: center;
   }
   .header-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-    margin: 18px 0;
+    gap: 16px;
+    margin-bottom: 16px;
   }
-  .mini-heading {
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px 10px;
+    background: var(--guide-purple-soft);
+  }
+  .card-tag {
+    display: inline-block;
+    background: var(--guide-pink);
+    color: white;
     font-family: "JetBrains Mono", monospace;
-    font-size: 12px;
-    letter-spacing: 0.05em;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
-    color: var(--ink-soft);
-    margin: 0 0 8px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin: 0 0 10px;
   }
   .plain-list {
     margin: 0;
     padding-left: 20px;
     font-size: 14.5px;
-  }
-  .duration-bar {
-    display: flex;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid var(--line);
-    margin: 18px 0;
-  }
-  .duration-seg {
-    padding: 8px 10px;
-    font-size: 11px;
-    color: var(--ink);
-    border-right: 1px solid var(--line);
-  }
-  .duration-seg:last-child {
-    border-right: none;
-  }
-  .duration-seg:nth-child(1) {
-    background: var(--highlight-soft);
-  }
-  .duration-seg:nth-child(2) {
-    background: var(--teacher-soft);
-  }
-  .duration-seg:nth-child(3) {
-    background: var(--pen-soft);
-  }
-  .duration-seg span {
-    display: block;
-    font-family: "JetBrains Mono", monospace;
-    font-weight: 600;
   }
   .layer-toggle {
     font-family: "JetBrains Mono", monospace;
@@ -306,18 +360,12 @@ const rightAnnotations = session.annotations.filter((_, i) => i % 2 === 1);
     min-width: 0;
   }
 
-  .moment-heading {
-    margin-top: 40px;
-    padding-top: 8px;
-    border-top: 2px solid var(--line);
-    font-size: 20px;
-  }
   .block {
     font-size: 16px;
   }
   .callout {
-    background: var(--highlight-soft);
-    border-left: 3px solid var(--highlight);
+    background: var(--guide-pink-soft);
+    border-left: 3px solid var(--guide-pink);
     border-radius: 0 10px 10px 0;
     margin: 0;
     padding: 14px 18px;
@@ -333,6 +381,7 @@ const rightAnnotations = session.annotations.filter((_, i) => i % 2 === 1);
     font-family: "JetBrains Mono", monospace;
     font-weight: 600;
     margin-top: 10px;
+    color: var(--guide-purple);
   }
   .glossary dd {
     margin-left: 0;
@@ -363,19 +412,30 @@ const rightAnnotations = session.annotations.filter((_, i) => i % 2 === 1);
   .block-wrap {
     margin-bottom: 18px;
   }
+  .block-footer {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
 
+  .page-tag,
   .chip {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     font-family: "JetBrains Mono", monospace;
-    font-size: 12px;
+    font-size: 11.5px;
     border: 1px solid var(--line);
     border-radius: 999px;
     padding: 5px 12px;
-    margin-top: 8px;
     background: var(--paper-raised);
     cursor: pointer;
+    color: var(--ink-soft);
+  }
+  .page-tag:hover {
+    border-color: var(--guide-purple);
+    color: var(--guide-purple);
   }
   @media (min-width: 900px) {
     .chip {

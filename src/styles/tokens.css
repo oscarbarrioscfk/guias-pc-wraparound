@@ -4,12 +4,21 @@
   --paper: #eef0e6;
   --paper-raised: #fbfbf6;
   --line: #c7ccbb;
+
+  /* colores de la capa docente (wraparound), deliberadamente distintos del
+     morado/rosa de la guia para que se lea como una capa aparte */
   --teacher: #1f6f78;
   --teacher-soft: #d9ecec;
   --pen: #a8420c;
   --pen-soft: #f6e2d3;
   --highlight: #c98a00;
   --highlight-soft: #f5e3ae;
+
+  /* colores tomados de la guia original (muestreados de las paginas reales) */
+  --guide-purple: #935cb1;
+  --guide-purple-soft: #f1eaf7;
+  --guide-pink: #ff6c84;
+  --guide-pink-soft: #fdeaee;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -25,6 +34,11 @@
     --pen-soft: #3a2417;
     --highlight: #e0b23e;
     --highlight-soft: #3a2f10;
+
+    --guide-purple: #c09bdb;
+    --guide-purple-soft: #2a2033;
+    --guide-pink: #ff8fa0;
+    --guide-pink-soft: #3a1f26;
   }
 }
 

@@ -1,0 +1,71 @@
+---
+// Replica la barra de encabezado que corre en cada pagina de las guias
+// impresas: "Grado 6º | Guía 1 ............ Sesión N | Estudiantes".
+interface Props {
+  grado: string;
+  guia: string;
+  sesion?: string;
+  rol: string;
+}
+
+const { grado, guia, sesion, rol } = Astro.props;
+---
+
+<div class="guide-header-bar">
+  <span class="seg seg-purple">{grado}</span>
+  <span class="seg seg-white">{guia}</span>
+  <span class="filler"></span>
+  {sesion && <span class="seg seg-purple">{sesion}</span>}
+  <span class="seg seg-pink">{rol}</span>
+</div>
+
+<style>
+  .guide-header-bar {
+    display: flex;
+    align-items: stretch;
+    border: 1.5px solid var(--guide-purple);
+    border-radius: 999px;
+    overflow: hidden;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    margin-bottom: 24px;
+    max-width: 100%;
+  }
+  .seg {
+    padding: 6px 16px;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+  }
+  .seg-purple {
+    background: var(--guide-purple);
+    color: white;
+  }
+  .seg-pink {
+    background: var(--guide-pink);
+    color: white;
+  }
+  .seg-white {
+    background: transparent;
+    color: var(--guide-purple);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .filler {
+    flex: 1;
+  }
+  @media (max-width: 560px) {
+    .guide-header-bar {
+      font-size: 10px;
+    }
+    .seg {
+      padding: 6px 10px;
+    }
+    .seg-white {
+      display: none;
+    }
+  }
+</style>

@@ -19,6 +19,10 @@ Piloto funcionando: Astro + TypeScript, sin backend. La Sesión 1 de Guía 1 ("C
 - ***Writing with Power*** — Teacher Wraparound Edition (Perfection Learning): el referente más fuerte hasta ahora — columna central con el texto del estudiante, márgenes izquierdo/derecho con notas docentes ancladas por flecha a párrafos específicos, franjas de diferenciación por nivel de ELL, y páginas de "Planning Guide" con tabla de estándares y tiempos por capítulo.
 - ***Our Choice*** (Al Gore / Push Pop Press): referente de profundidad de interactividad en infografías dentro de un libro digital.
 
+## Assets de la guía original
+
+`public/guias/certezas-en-la-incertidumbre/paginas/` y `public/iconos/` contienen recortes de página e íconos extraídos directamente del PDF de Guía 1 y Guía 0 (portada, páginas de la Sesión 1, y los 8 íconos de ejes de "Identificación de los aprendizajes"). Ambas guías están publicadas bajo [Creative Commons Atribución-No Comercial 4.0](https://creativecommons.org/licenses/by-nc/4.0/) por Colombia Programa (Ministerio TIC + British Council + ACOFI); este uso es no comercial y con atribución. Sirven para dos cosas en el explorador: mostrarle a quien enseña exactamente qué ve el estudiante (portada + galería de páginas en la portada del sitio, botón "ver página" en cada bloque de contenido) y para que la interfaz tome prestado el lenguaje visual real de la guía (barra de encabezado, banners de sesión y de momento, barra de duración a rayas, íconos de eje) en vez de inventar uno nuevo.
+
 ## Próximos pasos
 
 Con el piloto de la Sesión 1 validando el motor (ver [`docs/plataforma.md`](docs/plataforma.md) para la comparación que llevó a Astro), lo que sigue es: migrar las sesiones 2 a 5 de esta guía, decidir el hosting real y el embebido de prueba en un LMS, y evaluar si vale la pena sumar `vite-plugin-pwa`/Workbox en lugar del service worker artesanal actual.

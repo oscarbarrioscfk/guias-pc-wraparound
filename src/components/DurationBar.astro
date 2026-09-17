@@ -1,0 +1,69 @@
+---
+import { MOMENT_LABEL, type Moment } from "../types";
+
+interface Props {
+  duracion: [number, number, number];
+}
+
+const { duracion } = Astro.props;
+const moments: Moment[] = ["inicio", "manos", "cierre"];
+---
+
+<div class="duration-bar" role="img" aria-label={`Reparto de tiempo sugerido: ${duracion[0]}% ${MOMENT_LABEL.inicio}, ${duracion[1]}% ${MOMENT_LABEL.manos}, ${duracion[2]}% ${MOMENT_LABEL.cierre}`}>
+  <span class="db-bolt">⚡</span>
+  <div class="db-track">
+    {duracion.map((d) => <div class="db-seg" style={`flex-grow:${d}`}></div>)}
+  </div>
+</div>
+<div class="db-labels">
+  {moments.map((m, i) => (
+    <div class="db-label" style={`flex-grow:${duracion[i]}`}>
+      <strong>{duracion[i]}%</strong>
+      <span>{MOMENT_LABEL[m]}</span>
+    </div>
+  ))}
+</div>
+
+<style>
+  .duration-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .db-bolt {
+    flex: none;
+    font-size: 18px;
+  }
+  .db-track {
+    flex: 1;
+    display: flex;
+    height: 24px;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1.5px solid var(--guide-purple);
+    background-image: repeating-linear-gradient(45deg, var(--guide-purple) 0 6px, var(--guide-pink) 6px 12px);
+  }
+  .db-seg {
+    border-right: 2px solid var(--paper-raised);
+  }
+  .db-seg:last-child {
+    border-right: none;
+  }
+  .db-labels {
+    display: flex;
+    margin-top: 8px;
+    padding-left: 28px;
+    gap: 6px;
+  }
+  .db-label {
+    font-size: 11px;
+    color: var(--ink-soft);
+    text-align: center;
+  }
+  .db-label strong {
+    display: block;
+    font-family: "JetBrains Mono", monospace;
+    color: var(--guide-purple);
+    font-size: 13px;
+  }
+</style>

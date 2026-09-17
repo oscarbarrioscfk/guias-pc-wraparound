@@ -1,6 +1,8 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import StrandBadges from "../components/StrandBadges.astro";
 import { guia } from "../data/guias/certezas-en-la-incertidumbre/guia";
+import { paginaSrc } from "../types";
 
 const guias = [guia];
 const base = import.meta.env.BASE_URL;
@@ -12,29 +14,69 @@ const base = import.meta.env.BASE_URL;
     <h1>Explorador docente wraparound</h1>
     <p class="lede">
       Piloto del recorrido descrito en <a href="https://github.com/oscarbarrioscfk/guias-pc-wraparound/blob/main/docs/decisiones.md">docs/decisiones.md</a>: contenido
-      del estudiante con la capa docente anclada al lado, tal como en <em>Writing with Power</em>.
+      del estudiante con la capa docente anclada al lado, tal como en <em>Writing with Power</em>. Toca cualquier miniatura para ver la página real de la guía.
     </p>
 
     <div class="guides">
       {guias.map((g) => (
         <article class="guide-card">
-          <p class="eyebrow">{g.grado}</p>
-          <h2>{g.titulo}</h2>
-          <p>{g.resumen}</p>
-          <ol class="sessions">
-            {Array.from({ length: g.sesionesTotales }, (_, i) => i + 1).map((n) => {
-              const disponible = g.sesionesDisponibles.includes(n);
-              return (
+          <div class="guide-cover">
+            <button
+              type="button"
+              data-open-page
+              data-page-src={paginaSrc(base, g.slug, g.portadaPdfPage)}
+              data-page-alt={`Portada de ${g.titulo}`}
+              data-page-caption={`${g.titulo} — portada`}
+            >
+              <img src={paginaSrc(base, g.slug, g.portadaPdfPage)} alt={`Portada de ${g.titulo}`} width="300" height="388" loading="eager" />
+            </button>
+          </div>
+
+          <div class="guide-info">
+            <p class="eyebrow">{g.grado}</p>
+            <h2>{g.titulo}</h2>
+            <p>{g.resumen}</p>
+
+            <h3 class="mini-heading">Ejes que trabaja esta guía</h3>
+            <StrandBadges strands={g.strands} />
+
+            <h3 class="mini-heading">Sesiones</h3>
+            <ol class="sessions">
+              {Array.from({ length: g.sesionesTotales }, (_, i) => i + 1).map((n) => {
+                const disponible = g.sesionesDisponibles.includes(n);
+                return (
+                  <li>
+                    {disponible ? (
+                      <a href={`${base}guias/${g.slug}/sesion-${n}`}>Sesión {n}</a>
+                    ) : (
+                      <span class="soon">Sesión {n} — próximamente</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+
+          <div class="guide-gallery">
+            <h3 class="mini-heading">Páginas de la guía ya migradas (Sesión 1)</h3>
+            <p class="gallery-hint">Para saber exactamente qué está viendo el estudiante: toca una página para verla en grande.</p>
+            <ul class="thumbs">
+              {g.paginasDestacadas.map((p) => (
                 <li>
-                  {disponible ? (
-                    <a href={`${base}guias/${g.slug}/sesion-${n}`}>Sesión {n}</a>
-                  ) : (
-                    <span class="soon">Sesión {n} — próximamente</span>
-                  )}
+                  <button
+                    type="button"
+                    data-open-page
+                    data-page-src={paginaSrc(base, g.slug, p.pdfPage)}
+                    data-page-alt={p.etiqueta}
+                    data-page-caption={p.etiqueta}
+                  >
+                    <img src={paginaSrc(base, g.slug, p.pdfPage)} alt={p.etiqueta} loading="lazy" />
+                  </button>
+                  <span>{p.etiqueta}</span>
                 </li>
-              );
-            })}
-          </ol>
+              ))}
+            </ul>
+          </div>
         </article>
       ))}
     </div>
@@ -52,11 +94,41 @@ const base = import.meta.env.BASE_URL;
     margin-top: 32px;
   }
   .guide-card {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 24px;
     border: 1px solid var(--line);
     border-radius: 14px;
     padding: 22px 24px;
     background: var(--paper-raised);
-    max-width: 640px;
+    max-width: 880px;
+  }
+  @media (max-width: 640px) {
+    .guide-card {
+      grid-template-columns: 1fr;
+    }
+  }
+  .guide-cover button {
+    all: unset;
+    cursor: pointer;
+    display: block;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    box-shadow: 0 10px 24px -16px rgba(0, 0, 0, 0.4);
+  }
+  .guide-cover img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .mini-heading {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--guide-purple);
+    margin: 22px 0 10px;
   }
   .sessions {
     display: flex;
@@ -64,7 +136,7 @@ const base = import.meta.env.BASE_URL;
     gap: 10px;
     list-style: none;
     padding: 0;
-    margin: 16px 0 0;
+    margin: 0;
   }
   .sessions a,
   .sessions .soon {
@@ -76,11 +148,58 @@ const base = import.meta.env.BASE_URL;
     border: 1px solid var(--line);
   }
   .sessions a {
-    background: var(--teacher-soft);
+    background: var(--guide-purple-soft);
+    border-color: var(--guide-purple);
+    color: var(--guide-purple);
     text-decoration: none;
-    color: var(--ink);
+    font-weight: 600;
   }
   .sessions .soon {
     color: var(--ink-soft);
+  }
+
+  .guide-gallery {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--line);
+    padding-top: 6px;
+  }
+  .gallery-hint {
+    margin: 0 0 14px;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+  .thumbs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 14px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .thumbs li {
+    text-align: center;
+  }
+  .thumbs button {
+    all: unset;
+    cursor: pointer;
+    display: block;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    margin-bottom: 6px;
+  }
+  .thumbs button:hover {
+    border-color: var(--guide-purple);
+  }
+  .thumbs img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .thumbs span {
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    line-height: 1.3;
+    display: block;
   }
 </style>

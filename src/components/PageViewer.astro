@@ -1,0 +1,80 @@
+---
+// Visor compartido: cualquier elemento con data-open-page + data-page-src
+// abre esta misma ventana modal con la pagina fisica del PDF original.
+// Un solo <dialog> por documento, incluido una vez en BaseLayout.
+---
+
+<dialog id="page-viewer" class="page-viewer">
+  <form method="dialog" class="page-viewer-bar">
+    <p id="page-viewer-caption" class="page-viewer-caption"></p>
+    <button type="submit" class="page-viewer-close" aria-label="Cerrar">✕</button>
+  </form>
+  <div class="page-viewer-body">
+    <img id="page-viewer-img" src="" alt="" />
+  </div>
+</dialog>
+
+<script>
+  const dialog = document.getElementById("page-viewer") as HTMLDialogElement;
+  const img = document.getElementById("page-viewer-img") as HTMLImageElement;
+  const caption = document.getElementById("page-viewer-caption")!;
+
+  document.addEventListener("click", (event) => {
+    const trigger = (event.target as HTMLElement).closest<HTMLElement>("[data-open-page]");
+    if (!trigger) return;
+    img.src = trigger.dataset.pageSrc || "";
+    img.alt = trigger.dataset.pageAlt || "Página original de la guía";
+    caption.textContent = trigger.dataset.pageCaption || "";
+    dialog.showModal();
+  });
+</script>
+
+<style>
+  .page-viewer {
+    border: none;
+    border-radius: 14px;
+    padding: 0;
+    max-width: min(720px, 92vw);
+    max-height: 88vh;
+    background: var(--paper-raised);
+    color: var(--ink);
+  }
+  .page-viewer::backdrop {
+    background: rgba(20, 15, 10, 0.6);
+  }
+  .page-viewer-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .page-viewer-caption {
+    margin: 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .page-viewer-close {
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 8px;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    flex: none;
+  }
+  .page-viewer-body {
+    max-height: calc(88vh - 52px);
+    overflow: auto;
+    padding: 14px;
+  }
+  .page-viewer-body img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+  }
+</style>

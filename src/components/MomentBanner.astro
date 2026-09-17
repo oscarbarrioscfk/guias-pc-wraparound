@@ -1,0 +1,42 @@
+---
+// Replica el banner de dos franjas ("Manos a la obra" / "Desconectadas")
+// o de una sola franja ("Antes de irnos") que usan las guias originales
+// para marcar cada momento de la sesion.
+interface Props {
+  lines: { text: string; tone: "purple" | "pink" }[];
+  id?: string;
+}
+
+const { lines, id } = Astro.props;
+---
+
+<div class="moment-banner" id={id}>
+  {lines.map((line) => (
+    <p class={`mb-line mb-${line.tone}`}>{line.text}</p>
+  ))}
+</div>
+
+<style>
+  .moment-banner {
+    display: inline-flex;
+    flex-direction: column;
+    margin: 40px 0 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px -10px rgba(0, 0, 0, 0.35);
+  }
+  .mb-line {
+    margin: 0;
+    padding: 10px 22px;
+    color: white;
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 700;
+    font-size: 21px;
+  }
+  .mb-purple {
+    background: var(--guide-purple);
+  }
+  .mb-pink {
+    background: var(--guide-pink);
+  }
+</style>
