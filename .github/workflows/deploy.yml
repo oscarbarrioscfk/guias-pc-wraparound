@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, experimento/visor-doble]
   workflow_dispatch:
 
 permissions:
@@ -18,19 +18,50 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout main (piloto principal, sirve en /)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main
+
+      - name: Checkout experimento/visor-doble (sirve en /preview/)
+        uses: actions/checkout@v4
+        with:
+          ref: experimento/visor-doble
+          path: experimento-visor-doble
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npm run build
+
+      - name: Build main
+        working-directory: main
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build experimento/visor-doble
+        working-directory: experimento-visor-doble
+        env:
+          ASTRO_BASE: /guias-pc-wraparound/preview/
+        run: |
+          npm ci
+          npm run build
+
+      - name: Combinar ambos sitios en un solo artefacto
+        run: |
+          mkdir -p combined
+          cp -r main/dist/. combined/
+          mkdir -p combined/preview
+          cp -r experimento-visor-doble/dist/. combined/preview/
+
       - uses: actions/configure-pages@v5
         with:
           enablement: true
+
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: combined
 
   deploy:
     needs: build

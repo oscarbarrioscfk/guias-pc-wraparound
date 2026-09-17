@@ -17,6 +17,8 @@ const base = import.meta.env.BASE_URL;
       del estudiante con la capa docente anclada al lado, tal como en <em>Writing with Power</em>. Toca cualquier miniatura para ver la página real de la guía.
     </p>
 
+    <p class="branch-note">🧪 Probando otro formato: <a href={`${base}preview/experimentos/visor-doble`}>Visor doble — PDF + zonas interactivas</a> (rama <code>experimento/visor-doble</code>, sin tocar este piloto).</p>
+
     <div class="guides">
       {guias.map((g) => (
         <article class="guide-card">
@@ -87,6 +89,19 @@ const base = import.meta.env.BASE_URL;
   .lede {
     max-width: 62ch;
     color: var(--ink-soft);
+  }
+  .branch-note {
+    display: inline-block;
+    font-size: 13.5px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px dashed var(--guide-purple);
+    background: var(--guide-purple-soft);
+    color: var(--ink);
+  }
+  .branch-note code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
   }
   .guides {
     display: grid;
